@@ -18,7 +18,7 @@ filters:
   - type: join_file
     base_column: {name: id, type: long}
     counter_column: {name: id, type: long}
-    joined_keys_prefix: _joined_by_embulk_
+    joined_column_prefix: _joined_by_embulk_
     file_path: example/master.json
     file_format: json
     columns:

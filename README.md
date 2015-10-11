@@ -16,7 +16,7 @@ This plugin combine rows from file having data format like a table, based on a c
   - **name**: name of the column
   - **type**: type of the column (see below)
   - **format**: format of the timestamp if type is timestamp
-- **joined_keys_prefix**: prefix added to joined data keys (string, default: `"_joined_by_embulk_"`)
+- **joined_column_prefix**: prefix added to joined data columns (string, default: `"_joined_by_embulk_"`)
 - **file_path**: path of file (string, required)
 - **file_format**: file format (string, required, supported: `csv`, `tsv`, `yaml`, `json`)
 - **columns**: required columns of json table (array of hash, required)
@@ -42,12 +42,19 @@ filters:
   - type: left_outer_join_json_table
     base_column: {name: name_id, type: long}
     counter_column: {name: id, type: long}
-    joined_keys_prefix: _joined_by_embulk_
+    joined_column_prefix: _joined_by_embulk_
     file_path: master.json
     file_format: json
     columns:
       - {name: id, type: long}
       - {name: name, type: string}
+```
+
+## Run Example
+
+```
+$ ./gradlew classpath
+$ embulk run -I lib example/config.yml
 ```
 
 ## Supported Data Format
@@ -106,13 +113,6 @@ id\tname
     "name": "natsume.soseki"
   }
 ]
-```
-
-## Run Example
-
-```
-$ ./gradlew classpath
-$ embulk run -I lib example/config.yml
 ```
 
 ## Build
