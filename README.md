@@ -39,7 +39,7 @@ This plugin combine rows from file having data format like a table, based on a c
 
 ```yaml
 filters:
-  - type: left_outer_join_json_table
+  - type: join_file
     base_column: {name: name_id, type: long}
     counter_column: {name: id, type: long}
     joined_column_prefix: _joined_by_embulk_
