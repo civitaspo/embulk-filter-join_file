@@ -19,7 +19,7 @@ This plugin combine rows from file having data format like a table, based on a c
 - **joined_column_prefix**: prefix added to joined data columns (string, default: `"_joined_by_embulk_"`)
 - **file_path**: path of file (string, required)
 - **file_format**: file format (string, required, supported: `csv`, `tsv`, `yaml`, `json`)
-- **columns**: required columns of json table (array of hash, required)
+- **columns**: required columns of data from the file (array of hash, required)
   - **name**: name of the column
   - **type**: type of the column (see below)
   - **format**: format of the timestamp if type is timestamp
