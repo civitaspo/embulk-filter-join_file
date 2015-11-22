@@ -22,9 +22,7 @@ public class FilteredPageOutput
 {
     private final org.slf4j.Logger logger = Exec.getLogger(FilteredPageOutput.class);
     private final PageReader pageReader;
-    private final PageOutput pageOutput;
-    private final Schema inputSchema;
-    private final Schema outputSchema;
+    private final PageBuilder pageBuilder;
     private final Column joinBaseColumn;
     private final HashMap<String, HashMap<String, String>> table;
     private final List<Column> joinColumns;
@@ -41,9 +39,7 @@ public class FilteredPageOutput
             )
     {
         this.pageReader = new PageReader(inputSchema);
-        this.pageOutput = pageOutput;
-        this.inputSchema = inputSchema;
-        this.outputSchema = outputSchema;
+        this.pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, pageOutput);
         this.joinBaseColumn = joinBaseColumn;
         this.table = table;
         this.joinColumns = joinColumns;
@@ -54,33 +50,30 @@ public class FilteredPageOutput
     @Override
     public void add(Page page)
     {
-        try (final PageBuilder pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, pageOutput)) {
-            pageReader.setPage(page);
+        pageReader.setPage(page);
 
-            while (pageReader.nextRecord()) {
-                setInputValues(pageBuilder);
-                setJoinedValues(pageBuilder);
-                pageBuilder.addRecord();
-            }
-            pageBuilder.finish();
+        while (pageReader.nextRecord()) {
+            setInputValues(pageBuilder);
+            setJoinedValues(pageBuilder);
+            pageBuilder.addRecord();
         }
     }
 
     @Override
     public void finish()
     {
-        pageOutput.finish();
+        pageBuilder.finish();
     }
 
     @Override
     public void close()
     {
         pageReader.close();
-        pageOutput.close();
+        pageBuilder.close();
     }
 
     private void setInputValues(PageBuilder pageBuilder) {
-        for (Column inputColumn: inputSchema.getColumns()) {
+        for (Column inputColumn: pageReader.getSchema().getColumns()) {
             if (pageReader.isNull(inputColumn)) {
                 pageBuilder.setNull(inputColumn);
                 continue;
