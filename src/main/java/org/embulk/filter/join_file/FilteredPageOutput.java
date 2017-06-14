@@ -94,6 +94,9 @@ public class FilteredPageOutput
             else if (Types.TIMESTAMP.equals(inputColumn.getType())) {
                 pageBuilder.setTimestamp(inputColumn, pageReader.getTimestamp(inputColumn));
             }
+            else if (Types.JSON.equals(inputColumn.getType())) {
+                pageBuilder.setJson(inputColumn, pageReader.getJson(inputColumn));
+            }
         }
     }
 
