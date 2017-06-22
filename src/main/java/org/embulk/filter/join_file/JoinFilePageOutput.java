@@ -17,10 +17,10 @@ import java.util.List;
 /**
  * Created by takahiro.nakayama on 10/11/15.
  */
-public class FilteredPageOutput
+public class JoinFilePageOutput
         implements PageOutput
 {
-    private final org.slf4j.Logger logger = Exec.getLogger(FilteredPageOutput.class);
+    private final org.slf4j.Logger logger = Exec.getLogger(JoinFilePageOutput.class);
     private final PageReader pageReader;
     private final PageBuilder pageBuilder;
     private final Column joinBaseColumn;
@@ -28,7 +28,7 @@ public class FilteredPageOutput
     private final List<Column> joinColumns;
     private final HashMap<String, TimestampParser> timestampParserMap;
 
-    FilteredPageOutput(
+    JoinFilePageOutput(
             Schema inputSchema,
             Schema outputSchema,
             Column joinBaseColumn,

@@ -1,11 +1,9 @@
 package org.embulk.filter.join_file;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
-import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
@@ -122,7 +120,7 @@ public class JoinFileFilterPlugin
                 task.getJoinedColumnPrefix(),
                 task.getTimeZone());
 
-        return new FilteredPageOutput(inputSchema, outputSchema, baseColumn, task.getTable(), joinColumns, timestampParserMap, output);
+        return new JoinFilePageOutput(inputSchema, outputSchema, baseColumn, task.getTable(), joinColumns, timestampParserMap, output);
     }
 
     private Schema buildOutputSchema(Schema inputSchema, List<ColumnConfig> columns, String joinedColumnPrefix)
