@@ -25,10 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Civitaspo on 10/10/15.
- */
-
 public class JoinFileFilterPlugin
         implements FilterPlugin
 {

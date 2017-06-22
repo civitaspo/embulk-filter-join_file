@@ -14,9 +14,6 @@ import org.embulk.spi.type.Types;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by takahiro.nakayama on 10/11/15.
- */
 public class JoinFilePageOutput
         implements PageOutput
 {

@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by takahiro.nakayama on 10/11/15.
- */
 public class TableBuilder
 {
     private final Logger logger = Exec.getLogger(TableBuilder.class);
