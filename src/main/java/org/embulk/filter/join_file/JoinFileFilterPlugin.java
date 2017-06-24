@@ -1,11 +1,9 @@
 package org.embulk.filter.join_file;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
-import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
@@ -27,10 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Civitaspo on 10/10/15.
- */
-
 public class JoinFileFilterPlugin
         implements FilterPlugin
 {
@@ -40,31 +34,31 @@ public class JoinFileFilterPlugin
             extends Task, TimestampParser.Task
     {
         @Config("base_column")
-        public ColumnConfig getBaseColumn();
+        ColumnConfig getBaseColumn();
 
         @Config("counter_column")
         @ConfigDefault("{name: id, type: long}")
-        public ColumnConfig getCounterColumn();
+        ColumnConfig getCounterColumn();
 
         @Config("joined_column_prefix")
         @ConfigDefault("\"_joined_by_embulk_\"")
-        public String getJoinedColumnPrefix();
+        String getJoinedColumnPrefix();
 
         @Config("file_path")
-        public String getFilePath();
+        String getFilePath();
 
         @Config("file_format")
-        public String getFileFormat();
+        String getFileFormat();
 
         @Config("columns")
-        public List<ColumnConfig> getColumns();
+        List<ColumnConfig> getColumns();
 
         @Config("time_zone")
         @ConfigDefault("\"UTC\"")
-        public String getTimeZone();
+        String getTimeZone();
 
-        public HashMap<String, HashMap<String, String>> getTable();
-        public void setTable(HashMap<String, HashMap<String, String>> jsonTable);
+        HashMap<String, HashMap<String, String>> getTable();
+        void setTable(HashMap<String, HashMap<String, String>> jsonTable);
     }
 
     @Override
@@ -122,7 +116,7 @@ public class JoinFileFilterPlugin
                 task.getJoinedColumnPrefix(),
                 task.getTimeZone());
 
-        return new FilteredPageOutput(inputSchema, outputSchema, baseColumn, task.getTable(), joinColumns, timestampParserMap, output);
+        return new JoinFilePageOutput(inputSchema, outputSchema, baseColumn, task.getTable(), joinColumns, timestampParserMap, output);
     }
 
     private Schema buildOutputSchema(Schema inputSchema, List<ColumnConfig> columns, String joinedColumnPrefix)

@@ -1,6 +1,5 @@
 package org.embulk.filter.join_file;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
@@ -16,9 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by takahiro.nakayama on 10/11/15.
- */
 public class TableBuilder
 {
     private final Logger logger = Exec.getLogger(TableBuilder.class);
