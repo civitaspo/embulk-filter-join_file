@@ -34,31 +34,31 @@ public class JoinFileFilterPlugin
             extends Task, TimestampParser.Task
     {
         @Config("base_column")
-        public ColumnConfig getBaseColumn();
+        ColumnConfig getBaseColumn();
 
         @Config("counter_column")
         @ConfigDefault("{name: id, type: long}")
-        public ColumnConfig getCounterColumn();
+        ColumnConfig getCounterColumn();
 
         @Config("joined_column_prefix")
         @ConfigDefault("\"_joined_by_embulk_\"")
-        public String getJoinedColumnPrefix();
+        String getJoinedColumnPrefix();
 
         @Config("file_path")
-        public String getFilePath();
+        String getFilePath();
 
         @Config("file_format")
-        public String getFileFormat();
+        String getFileFormat();
 
         @Config("columns")
-        public List<ColumnConfig> getColumns();
+        List<ColumnConfig> getColumns();
 
         @Config("time_zone")
         @ConfigDefault("\"UTC\"")
-        public String getTimeZone();
+        String getTimeZone();
 
-        public HashMap<String, HashMap<String, String>> getTable();
-        public void setTable(HashMap<String, HashMap<String, String>> jsonTable);
+        HashMap<String, HashMap<String, String>> getTable();
+        void setTable(HashMap<String, HashMap<String, String>> jsonTable);
     }
 
     @Override
