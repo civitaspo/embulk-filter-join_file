@@ -15,7 +15,7 @@ public class JoinFileFilterPlugin
     {
         PluginTask task = PluginTask.loadConfig(config);
 
-        Schema outputSchema = inputSchema;
+        Schema outputSchema = task.buildOutputSchema(inputSchema);
 
         control.run(task.dump(), outputSchema);
     }

@@ -1,12 +1,14 @@
 package org.embulk.filter.join_file;
 
-import com.google.common.base.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.ColumnConfig;
+import org.embulk.spi.Page;
+import org.embulk.spi.Schema;
+import org.embulk.spi.SchemaConfig;
 import org.embulk.spi.time.TimestampParser;
 import org.embulk.standards.LocalFileInputPlugin;
 
@@ -45,7 +47,7 @@ public class PluginTask
         List<ConfigSource> getDecorders();
 
         @Config("columns")
-        List<ColumnConfig> getColumns();
+        SchemaConfig getColumns();
 
         @Config("joined_column_prefix")
         @ConfigDefault("\"_joined_by_embulk_\"")
@@ -69,15 +71,61 @@ public class PluginTask
     private PluginTask(RootTask rootTask)
     {
         this.rootTask = rootTask;
+        configure();
     }
+
+    private void configure()
+    {
+        ToJoinedColumnName.configure(this);
+}
 
     public RootTask getRootTask()
     {
         return rootTask;
     }
 
+    public OnTask getOnTask()
+    {
+        return getRootTask().getOn();
+    }
+
+    public FileTask getFileTask()
+    {
+        return getRootTask().getFile();
+    }
+
+    public SchemaConfig getFileSchemaConfig()
+    {
+        return getFileTask().getColumns();
+    }
+
+    public List<ColumnConfig> getFileColumnConfigs()
+    {
+        return getFileSchemaConfig().getColumns();
+    }
+
+    public String getJoinedColumnPrefix()
+    {
+        return getFileTask().getJoinedColumnPrefix();
+    }
+
+    public String convertToJoinedColumnName(String original)
+    {
+        return ToJoinedColumnName.convert(original);
+    }
+
     public TaskSource dump()
     {
         return getRootTask().dump();
+    }
+
+    public Schema buildOutputSchema(Schema inputSchema)
+    {
+        final Schema.Builder builder = Schema.builder();
+        inputSchema.getColumns().forEach(c ->
+                builder.add(c.getName(), c.getType()));
+        getFileColumnConfigs().forEach(cc ->
+                builder.add(convertToJoinedColumnName(cc.getName()), cc.getType()));
+        return builder.build();
     }
 }
