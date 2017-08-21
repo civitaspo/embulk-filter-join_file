@@ -1,0 +1,37 @@
+in:
+  type: file
+  path_prefix: example/data.csv
+  parser:
+    type: csv
+    charset: UTF-8
+    newline: CRLF
+    null_string: 'NULL'
+    skip_header_lines: 1
+    comment_line_marker: '#'
+    columns:
+      - {name: time,  type: timestamp, format: "%Y-%m-%d"}
+      - {name: id, type: long}
+      - {name: name, type: string}
+      - {name: score, type: double}
+
+filters:
+  - type: join_file
+    on:
+      in_column: id
+      file_column: id
+    file:
+      path_prefix: ./example/json_array_of_hash/*.json
+      parser:
+        type: jsonpath
+        root: "$."
+      columns:
+        - {name: id, type: long}
+        - {name: name, type: string}
+        - {name: created_at, type: timestamp, format: "%Y-%m-%d"}
+        - {name: point, type: double}
+        - {name: time_zone, type: string}
+      joined_column_prefix: _joined_by_embulk_
+
+
+out:
+  type: stdout

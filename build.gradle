@@ -14,12 +14,13 @@ configurations {
 }
 
 version = "0.1.0"
+
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.+"
-    provided "org.embulk:embulk-core:0.8.+"
+    compile  "org.embulk:embulk-core:0.8.29"
+    provided "org.embulk:embulk-core:0.8.29"
     testCompile "junit:junit:4.+"
 }
 
@@ -46,6 +47,7 @@ task checkstyle(type: Checkstyle) {
     classpath = sourceSets.main.output + sourceSets.test.output
     source = sourceSets.main.allJava + sourceSets.test.allJava
 }
+
 task gem(type: JRubyExec, dependsOn: ["gemspec", "classpath"]) {
     jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
     script "${project.name}.gemspec"
@@ -57,9 +59,11 @@ task gemPush(type: JRubyExec, dependsOn: ["gem"]) {
     script "pkg/${project.name}-${project.version}.gem"
 }
 
-task "package"(dependsOn: ["gemspec", "classpath"]) << {
-    println "> Build succeeded."
-    println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+task "package"(dependsOn: ["gemspec", "classpath"]) {
+    doLast {
+        println "> Build succeeded."
+        println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+    }
 }
 
 task gemspec {

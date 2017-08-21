@@ -10,19 +10,35 @@ This plugin combine rows from file having data format like a table, based on a c
 
 * **on**:
   * **in_column**: name of the column on input. (string, required)
-  * **file_column**: name of the column on file. (string, default is the same as **in_column**)
+  * **file_column**: name of the column on file. (string, required)
 * **file**:
-  * **path**: path of file (string, required)
-  * **format**: file format (string, required, supported: `json`)
-  * **encode**: file encode (string, default is `raw`, supported: `raw`, `gzip`)
+  * **path_prefix**: Path prefix of input files (string, required)
+  * **parser**: Parser configurations (see below [Supported Parser Type](#supported-parser-type)) (hash, required)
+  * **decoders**: Decoder configuration (see below [Supported Decorder Type](#supported-decorder-type)) (array of hash, optional)
+  * **follow_symlinks**: If true, follow symbolic link directories (boolean, default: `false`)
   * **columns**: required columns of data from the file (array of hash, required)
     * **name**: name of the column
-    * **type**: type of the column (see below)
+    * **type**: type of the column (see below [Type of the column](#type-of-the-column))
     * **format**: format of the timestamp if type is timestamp
-    * **timezone**: timezone of the timestamp if type is timestamp  
+    * **timezone**: timezone of the timestamp if type is timestamp
+  * **joined_column_prefix**: prefix added to joined column name for prevent duplicating column name (string, default: `"_joined_by_embulk_""`)
 
----
-**type of the column**
+### Supported Parser Type
+
+* You can use all embulk file-parser plugins.
+  * [built-in parser plugins](http://www.embulk.org/docs/built-in.html)
+  * [parser plugins](http://www.embulk.org/plugins/#file-parser).
+* Special Configuration which [embulk-filter-join_file](./) can set in **parser** section.
+  * **columns_option_name**: Set the **file.columns** value to the option which this option indicates. (optional, default: `"columns"`)
+  * **join_file_columns_option_name**: Same as the **columns_option_name** option. Use this if a parser plugin has **columns_option_name** as its owned option.
+
+### Supported Decorder Type
+
+* You can use all embulk file-decorder plugins.
+  * [built-in decorder plugins](http://www.embulk.org/docs/built-in.html)
+  * [decorder plugins](http://www.embulk.org/plugins/#file-decoder)
+
+### Type of the column
 
 |name|description|
 |:---|:---|
@@ -39,47 +55,30 @@ This plugin combine rows from file having data format like a table, based on a c
 filters:
   - type: join_file
     on:
-      in_column: name_id
+      in_column: id
       file_column: id
     file:
-      path: ./master.json
-      format: json
-      encode: raw
+      path_prefix: ./example/json_array_of_hash/*.json
+      parser:
+        type: jsonpath
+        root: "$."
       columns:
         - {name: id, type: long}
         - {name: name, type: string}
-    joined_column_prefix: _joined_by_embulk_
+        - {name: created_at, type: timestamp, format: "%Y-%m-%d"}
+        - {name: point, type: double}
+        - {name: time_zone, type: string}
+      joined_column_prefix: _joined_by_embulk_
 ```
+
+See [more examples](./example).
 
 ## Run Example
 
 ```
 $ ./gradlew classpath
-$ embulk run -I lib example/config.yml
-```
-
-## Supported Data Format
-* json
-
-### Supported Data Format Example
-
-#### JSON
-
-```
-[
-  {
-    "id": 0,
-    "name": "civitaspo"
-  },
-  {
-    "id": 2,
-    "name": "moriogai"
-  },
-  {
-    "id": 5,
-    "name": "natsume.soseki"
-  }
-]
+$ embulk bundle install --gemfile=example/Gemfile --path vendor/bundle
+$ embulk run -b example -Ilib example/config.yml
 ```
 
 ## Build

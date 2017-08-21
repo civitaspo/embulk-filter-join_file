@@ -6,4 +6,8 @@
 /classpath/
 build/
 .idea
+/.settings/
+/.metadata/
+.classpath
+.project
 *.iml
