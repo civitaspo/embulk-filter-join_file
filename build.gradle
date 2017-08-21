@@ -21,6 +21,10 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.29"
     provided "org.embulk:embulk-core:0.8.29"
+    compile  "org.embulk:embulk-standards:0.8.29"
+    provided "org.embulk:embulk-standards:0.8.29"
+    compile "org.komamitsu:fluency:1.4.0"
+    compile "com.okumin:influent:0.3.0"
     testCompile "junit:junit:4.+"
 }
 
