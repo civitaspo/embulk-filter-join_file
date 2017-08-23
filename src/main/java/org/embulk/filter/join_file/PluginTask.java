@@ -5,8 +5,8 @@ import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
+import org.embulk.filter.join_file.table.JoinTableSchemaBuilder;
 import org.embulk.spi.ColumnConfig;
-import org.embulk.spi.Page;
 import org.embulk.spi.Schema;
 import org.embulk.spi.SchemaConfig;
 import org.embulk.spi.time.TimestampParser;
@@ -49,9 +49,9 @@ public class PluginTask
         @Config("columns")
         SchemaConfig getColumns();
 
-        @Config("joined_column_prefix")
-        @ConfigDefault("\"_joined_by_embulk_\"")
-        String getJoinedColumnPrefix();
+        @Config("join_table_column_prefix")
+        @ConfigDefault("\"_join_by_embulk_\"")
+        String getJoinTableColumnPrefix();
     }
 
     public static PluginTask loadConfig(ConfigSource configSource)
@@ -71,13 +71,7 @@ public class PluginTask
     private PluginTask(RootTask rootTask)
     {
         this.rootTask = rootTask;
-        configure();
     }
-
-    private void configure()
-    {
-        ToJoinedColumnName.configure(this);
-}
 
     public RootTask getRootTask()
     {
@@ -94,6 +88,11 @@ public class PluginTask
         return getRootTask().getFile();
     }
 
+    public Schema getFileSchema()
+    {
+        return getFileSchemaConfig().toSchema();
+    }
+
     public SchemaConfig getFileSchemaConfig()
     {
         return getFileTask().getColumns();
@@ -104,14 +103,9 @@ public class PluginTask
         return getFileSchemaConfig().getColumns();
     }
 
-    public String getJoinedColumnPrefix()
+    public String getJoinTableColumnPrefix()
     {
-        return getFileTask().getJoinedColumnPrefix();
-    }
-
-    public String convertToJoinedColumnName(String original)
-    {
-        return ToJoinedColumnName.convert(original);
+        return getFileTask().getJoinTableColumnPrefix();
     }
 
     public TaskSource dump()
@@ -119,13 +113,23 @@ public class PluginTask
         return getRootTask().dump();
     }
 
+    public JoinTableSchemaBuilder getJoinTableSchemaBuilder()
+    {
+        return new JoinTableSchemaBuilder(getJoinTableColumnPrefix());
+    }
+
     public Schema buildOutputSchema(Schema inputSchema)
     {
-        final Schema.Builder builder = Schema.builder();
-        inputSchema.getColumns().forEach(c ->
-                builder.add(c.getName(), c.getType()));
-        getFileColumnConfigs().forEach(cc ->
-                builder.add(convertToJoinedColumnName(cc.getName()), cc.getType()));
+        JoinTableSchemaBuilder builder = getJoinTableSchemaBuilder();
+
+        inputSchema
+                .getColumns()
+                .forEach(c -> builder.add(c.getName(), c.getType()));
+
+        getFileSchema()
+                .getColumns()
+                .forEach(c -> builder.addJoinTableColumn(c.getName(), c.getType()));
+
         return builder.build();
     }
 }

@@ -21,7 +21,7 @@ This plugin combine rows from file having data format like a table, based on a c
     * **type**: type of the column (see below [Type of the column](#type-of-the-column))
     * **format**: format of the timestamp if type is timestamp
     * **timezone**: timezone of the timestamp if type is timestamp
-  * **joined_column_prefix**: prefix added to joined column name for prevent duplicating column name (string, default: `"_joined_by_embulk_""`)
+  * **join_table_column_prefix**: prefix added to join table column name for prevent duplicating column name (string, default: `"_join_by_embulk_""`)
 
 ### Supported Parser Type
 
@@ -68,7 +68,7 @@ filters:
         - {name: created_at, type: timestamp, format: "%Y-%m-%d"}
         - {name: point, type: double}
         - {name: time_zone, type: string}
-      joined_column_prefix: _joined_by_embulk_
+      join_table_column_prefix: _join_by_embulk_
 ```
 
 See [more examples](./example).

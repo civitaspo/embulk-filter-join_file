@@ -30,7 +30,7 @@ filters:
         - {name: created_at, type: timestamp, format: "%Y-%m-%d"}
         - {name: point, type: double}
         - {name: time_zone, type: string}
-      joined_column_prefix: _joined_by_embulk_
+      join_table_column_prefix: _join_by_embulk_
 
 
 out:
