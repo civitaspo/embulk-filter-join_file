@@ -108,6 +108,15 @@ public class PluginTask
         return getFileTask().getJoinTableColumnPrefix();
     }
 
+    public Schema buildJoinTableSchema()
+    {
+        JoinTableSchemaBuilder builder = getJoinTableSchemaBuilder();
+        getFileSchema()
+                .getColumns()
+                .forEach(c -> builder.addJoinTableColumn(c.getName(), c.getType()));
+        return builder.build();
+    }
+
     public TaskSource dump()
     {
         return getRootTask().dump();
