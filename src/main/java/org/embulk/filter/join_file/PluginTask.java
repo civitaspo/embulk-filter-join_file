@@ -51,9 +51,9 @@ public class PluginTask
         @Config("columns")
         SchemaConfig getColumns();
 
-        @Config("join_table_column_prefix")
-        @ConfigDefault("\"_join_by_embulk_\"")
-        String getJoinTableColumnPrefix();
+        @Config("column_prefix")
+        @ConfigDefault("\"_joined_by_embulk_\"")
+        String getColumnPrefix();
 
         @Config("parser_plugin_columns_option")
         @ConfigDefault("\"columns\"")
