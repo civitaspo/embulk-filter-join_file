@@ -24,6 +24,7 @@ public class PluginTask
 
         @Config("file")
         FileTask getFile();
+        void setFile(FileTask file);
     }
 
     public interface OnTask
@@ -41,6 +42,7 @@ public class PluginTask
     {
         @Config("parser")
         ConfigSource getParser();
+        void setParser(ConfigSource parser);
 
         @Config("decoders")
         @ConfigDefault("[]")
@@ -52,6 +54,10 @@ public class PluginTask
         @Config("join_table_column_prefix")
         @ConfigDefault("\"_join_by_embulk_\"")
         String getJoinTableColumnPrefix();
+
+        @Config("parser_plugin_columns_option")
+        @ConfigDefault("\"columns\"")
+        String getParserPluginColumnsOption();
     }
 
     public static PluginTask loadConfig(ConfigSource configSource)
@@ -66,11 +72,24 @@ public class PluginTask
         return new PluginTask(task);
     }
 
-    private final RootTask rootTask;
+    private RootTask rootTask;
 
     private PluginTask(RootTask rootTask)
     {
         this.rootTask = rootTask;
+        afterInitialize();
+    }
+
+    private void afterInitialize()
+    {
+        FileTask fileTask = getFileTask();
+        ConfigSource parserTask = fileTask.getParser();
+        List columnsOption = parserTask.get(List.class, fileTask.getParserPluginColumnsOption());
+        if (columnsOption == null || columnsOption.isEmpty()) {
+            parserTask.set(fileTask.getParserPluginColumnsOption(), getFileSchemaConfig());
+            fileTask.setParser(parserTask);
+            rootTask.setFile(fileTask);
+        }
     }
 
     public RootTask getRootTask()
