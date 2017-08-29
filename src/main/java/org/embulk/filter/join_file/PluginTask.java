@@ -30,8 +30,8 @@ public class PluginTask
     public interface OnTask
             extends Task
     {
-        @Config("page_column")
-        String getPageColumn();
+        @Config("input_column")
+        String getInputColumn();
 
         @Config("file_column")
         String getFileColumn();

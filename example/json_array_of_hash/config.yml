@@ -17,7 +17,7 @@ in:
 filters:
   - type: join_file
     on:
-      page_column: id
+      input_column: id
       file_column: id
     file:
       path_prefix: ./example/json_array_of_hash/*.json

@@ -9,7 +9,7 @@ This plugin combine rows from file having data format like a table, based on a c
 ## Configuration
 
 * **on**:
-  * **page_column**: name of the column on page. (string, required)
+  * **input_column**: name of the column on input. (string, required)
   * **file_column**: name of the column on file. (string, required)
 * **file**:
   * **path_prefix**: Path prefix of input files (string, required)
@@ -55,7 +55,7 @@ This plugin combine rows from file having data format like a table, based on a c
 filters:
   - type: join_file
     on:
-      page_column: id
+      input_column: id
       file_column: id
     file:
       path_prefix: ./example/json_array_of_hash/*.json
