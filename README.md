@@ -13,7 +13,7 @@ This plugin combine rows from file having data format like a table, based on a c
   * **file_column**: name of the column on file. (string, required)
 * **file**:
   * **path_prefix**: Path prefix of input files (string, required)
-  * **parser**: Parser configurations (see below [Supported Parser Type](#supported-parser-type)) (hash, required)
+  * **parser**: Parser configurations except **columns** option (see below [Supported Parser Type](#supported-parser-type)) (hash, required)
   * **decoders**: Decoder configuration (see below [Supported Decorder Type](#supported-decorder-type)) (array of hash, optional)
   * **follow_symlinks**: If true, follow symbolic link directories (boolean, default: `false`)
   * **columns**: required columns of data from the file (array of hash, required)
@@ -22,15 +22,14 @@ This plugin combine rows from file having data format like a table, based on a c
     * **format**: format of the timestamp if type is timestamp
     * **timezone**: timezone of the timestamp if type is timestamp
   * **column_prefix**: column name prefix added to file `columns` for prevent duplicating column name (string, default: `"_join_by_embulk_""`)
+  * **parser_plugin_columns_option**: Set the **file.columns** value as this option name into **file.parser** options. (optional, default: `"columns"`, see [Supported Parser Type](#supported-parser-type) in details.)
 
 ### Supported Parser Type
 
 * You can use all embulk file-parser plugins.
   * [built-in parser plugins](http://www.embulk.org/docs/built-in.html)
   * [parser plugins](http://www.embulk.org/plugins/#file-parser).
-* Special Configuration which [embulk-filter-join_file](./) can set in **parser** section.
-  * **columns_option_name**: Set the **file.columns** value to the option which this option indicates. (optional, default: `"columns"`)
-  * **join_file_columns_option_name**: Same as the **columns_option_name** option. Use this if a parser plugin has **columns_option_name** as its owned option.
+* You don't need to define the option like **columns** into **file.parser** options, because **file.columns** value is set into **file.parser**'s **columns** option. If you set a value to **file.parser_plugin_columns_option**, this plugin sets **file.columns** value as the option name that is set into into **file.parser** options as **file.parser_plugin_columns_option** option.
 
 ### Supported Decorder Type
 
