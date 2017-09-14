@@ -23,8 +23,10 @@ dependencies {
     provided "org.embulk:embulk-core:0.8.29"
     compile  "org.embulk:embulk-standards:0.8.29"
     provided "org.embulk:embulk-standards:0.8.29"
-    compile "org.komamitsu:fluency:1.4.0"
-    compile "com.okumin:influent-java:0.3.0"
+    compile  "com.google.guava:guava:23.0"
+    provided "com.google.guava:guava:23.0"
+    compile  "org.komamitsu:fluency:1.4.0"
+    compile  "com.okumin:influent-java:0.3.0"
     testCompile "junit:junit:4.+"
 }
 
