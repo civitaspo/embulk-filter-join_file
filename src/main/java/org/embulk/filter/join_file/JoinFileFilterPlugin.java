@@ -1,64 +1,105 @@
 package org.embulk.filter.join_file;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
+import org.embulk.filter.join_file.join.Joinee;
 import org.embulk.spi.Column;
-import org.embulk.spi.ColumnConfig;
-import org.embulk.spi.Exec;
 import org.embulk.spi.FilterPlugin;
 import org.embulk.spi.PageOutput;
 import org.embulk.spi.Schema;
-import org.embulk.spi.time.TimestampParser;
-import org.embulk.spi.type.Types;
-import org.joda.time.DateTimeZone;
-import org.jruby.embed.ScriptingContainer;
-import org.slf4j.Logger;
+import org.embulk.spi.SchemaConfig;
+import org.embulk.standards.LocalFileInputPlugin;
+import pro.civitaspo.embulk.forward.InForwardService;
+import pro.civitaspo.embulk.forward.OutForwardService;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class JoinFileFilterPlugin
         implements FilterPlugin
 {
-    private static final Logger logger = Exec.getLogger(JoinFileFilterPlugin.class);
-
     public interface PluginTask
-            extends Task, TimestampParser.Task
+            extends Task
     {
-        @Config("base_column")
-        ColumnConfig getBaseColumn();
+        @Config("on")
+        OnTask getOnTask();
 
-        @Config("counter_column")
-        @ConfigDefault("{name: id, type: long}")
-        ColumnConfig getCounterColumn();
+        @Config("file")
+        FileTask getFileTask();
 
-        @Config("joined_column_prefix")
-        @ConfigDefault("\"_joined_by_embulk_\"")
-        String getJoinedColumnPrefix();
+        Joinee getJoinee();
+        void setJoinee(Joinee joinee);
 
-        @Config("file_path")
-        String getFilePath();
+        static Schema buildOutputSchema(PluginTask task, Schema inputSchema)
+        {
+            Schema.Builder builder = Schema.builder();
 
-        @Config("file_format")
-        String getFileFormat();
+            for (Column c : inputSchema.getColumns()) {
+                builder.add(c.getName(), c.getType());
+            }
+
+            FileTask fileTask = task.getFileTask();
+            Schema joineeSchema = fileTask.getColumns().toSchema();
+            for (Column c : joineeSchema.getColumns()) {
+                String joinedColumn = new StringBuilder()
+                        // NOTE: `FileTask#getColumnPrefix()` is only used here,
+                        //       because this plugin manage columns only by index hereafter.
+                        .append(fileTask.getColumnPrefix())
+                        .append(c.getName())
+                        .toString();
+                builder.add(joinedColumn, c.getType());
+            }
+
+            return builder.build();
+        }
+    }
+
+    public interface OnTask
+            extends Task
+    {
+        @Config("input_column")
+        String getInputColumnName();
+
+        @Config("file_column")
+        String getFileColumnName();
+    }
+
+    public interface FileTask
+            extends Task, LocalFileInputPlugin.PluginTask, InForwardService.Task, OutForwardService.Task
+    {
+        @Config("parser")
+        ConfigSource getParser();
+        void setParser(ConfigSource parser);
+
+        @Config("decoders")
+        @ConfigDefault("[]")
+        List<ConfigSource> getDecorders();
 
         @Config("columns")
-        List<ColumnConfig> getColumns();
+        SchemaConfig getColumns();
 
-        @Config("time_zone")
-        @ConfigDefault("\"UTC\"")
-        String getTimeZone();
+        @Config("column_prefix")
+        @ConfigDefault("\"_joined_by_embulk_\"")
+        String getColumnPrefix();
 
-        HashMap<String, HashMap<String, String>> getTable();
-        void setTable(HashMap<String, HashMap<String, String>> jsonTable);
+        @Config("parser_plugin_columns_option")
+        @ConfigDefault("\"columns\"")
+        String getParserPluginColumnsOption();
+
+        // NOTE: This plugin doesn't worry about format and timezone,
+        //       because the responsibility is transferred to Embulk Parser Plugin.
+        static void putParserColumnsIfAbsent(FileTask task)
+        {
+            ConfigSource parserTask = task.getParser();
+            List columnsOption = parserTask.get(List.class, task.getParserPluginColumnsOption(), null);
+            if (columnsOption == null || columnsOption.isEmpty()) {
+                parserTask.set(task.getParserPluginColumnsOption(), task.getColumns());
+                task.setParser(parserTask);
+            }
+        }
     }
 
     @Override
@@ -66,25 +107,13 @@ public class JoinFileFilterPlugin
             FilterPlugin.Control control)
     {
         PluginTask task = config.loadConfig(PluginTask.class);
+        Schema outputSchema = PluginTask.buildOutputSchema(task, inputSchema);
 
-        try {
-            TableBuilder tableBuilder = new TableBuilder(
-                    task.getFilePath(),
-                    task.getFileFormat(),
-                    task.getColumns(),
-                    task.getCounterColumn().getName(),
-                    task.getJoinedColumnPrefix());
-            
-            task.setTable(tableBuilder.build());
-        }
-        catch (IOException e) {
-            logger.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
+        Joinee joinee = FileLoader.loadFile(task.getFileTask());
+        task.setJoinee(joinee);
 
-        Schema outputSchema = buildOutputSchema(inputSchema, task.getColumns(), task.getJoinedColumnPrefix());
-        logger.info("output schema: {}", outputSchema);
-        
+        task.getFileTask().setFiles(Lists.newArrayList()); // TODO: why is this required?
+
         control.run(task.dump(), outputSchema);
     }
 
@@ -93,64 +122,6 @@ public class JoinFileFilterPlugin
             Schema outputSchema, PageOutput output)
     {
         PluginTask task = taskSource.loadTask(PluginTask.class);
-
-        // create joinColumns/baseColumn
-        final List<Column> outputColumns = outputSchema.getColumns();
-        final List<Column> inputColumns = inputSchema.getColumns();
-
-        Map<String, Column> inputColumnMap = Maps.newHashMap();
-        final List<Column> joinColumns = new ArrayList<>();
-        for (Column column : outputColumns) {
-            if (!inputColumns.contains(column)) {
-                joinColumns.add(column);
-            } else {
-                inputColumnMap.put(column.getName(), column);
-            }
-        }
-
-        final Column baseColumn = inputColumnMap.get(task.getBaseColumn().getName());
-
-        final HashMap<String, TimestampParser> timestampParserMap = buildTimestampParserMap(
-                task.getJRuby(),
-                task.getColumns(),
-                task.getJoinedColumnPrefix(),
-                task.getTimeZone());
-
-        return new JoinFilePageOutput(inputSchema, outputSchema, baseColumn, task.getTable(), joinColumns, timestampParserMap, output);
-    }
-
-    private Schema buildOutputSchema(Schema inputSchema, List<ColumnConfig> columns, String joinedColumnPrefix)
-    {
-        ImmutableList.Builder<Column> builder = ImmutableList.builder();
-
-        int i = 0; // columns index
-        for (Column inputColumn: inputSchema.getColumns()) {
-            Column outputColumn = new Column(i++, inputColumn.getName(), inputColumn.getType());
-            builder.add(outputColumn);
-        }
-        for (ColumnConfig columnConfig: columns) {
-            String columnName = joinedColumnPrefix + columnConfig.getName();
-            builder.add(new Column(i++, columnName, columnConfig.getType()));
-        }
-
-        return new Schema(builder.build());
-    }
-
-    private HashMap<String, TimestampParser> buildTimestampParserMap(ScriptingContainer jruby, List<ColumnConfig> columns, String joinedColumnPrefix, String timeZone)
-    {
-        final HashMap<String, TimestampParser> timestampParserMap = Maps.newHashMap();
-        for (ColumnConfig columnConfig: columns) {
-            if (Types.TIMESTAMP.equals(columnConfig.getType())) {
-                String format = columnConfig.getOption().get(String.class, "format");
-                DateTimeZone timezone = DateTimeZone.forID(timeZone);
-                TimestampParser parser = new TimestampParser(jruby, format, timezone);
-
-                String columnName = joinedColumnPrefix + columnConfig.getName();
-
-                timestampParserMap.put(columnName, parser);
-            }
-        }
-
-        return timestampParserMap;
+        return new JoinFilePageOutput(task, inputSchema, outputSchema, output);
     }
 }
