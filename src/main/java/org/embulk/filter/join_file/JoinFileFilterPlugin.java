@@ -17,7 +17,6 @@ import org.embulk.spi.Schema;
 import org.embulk.spi.time.TimestampParser;
 import org.embulk.spi.type.Types;
 import org.joda.time.DateTimeZone;
-import org.jruby.embed.ScriptingContainer;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -112,7 +111,6 @@ public class JoinFileFilterPlugin
         final Column baseColumn = inputColumnMap.get(task.getBaseColumn().getName());
 
         final HashMap<String, TimestampParser> timestampParserMap = buildTimestampParserMap(
-                task.getJRuby(),
                 task.getColumns(),
                 task.getJoinedColumnPrefix(),
                 task.getTimeZone());
@@ -140,7 +138,7 @@ public class JoinFileFilterPlugin
     private static interface ParserIntlTask extends Task, TimestampParser.Task {}
     private static interface ParserIntlColumnOption extends Task, TimestampParser.TimestampColumnOption {}
 
-    private HashMap<String, TimestampParser> buildTimestampParserMap(ScriptingContainer jruby, List<ColumnConfig> columns, String joinedColumnPrefix, String timeZone)
+    private HashMap<String, TimestampParser> buildTimestampParserMap(List<ColumnConfig> columns, String joinedColumnPrefix, String timeZone)
     {
         final HashMap<String, TimestampParser> timestampParserMap = Maps.newHashMap();
         for (ColumnConfig columnConfig: columns) {
