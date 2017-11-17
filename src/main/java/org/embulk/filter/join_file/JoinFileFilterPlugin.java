@@ -1,5 +1,6 @@
 package org.embulk.filter.join_file;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.embulk.config.Config;
@@ -136,6 +137,9 @@ public class JoinFileFilterPlugin
         return new Schema(builder.build());
     }
 
+    private static interface ParserIntlTask extends Task, TimestampParser.Task {}
+    private static interface ParserIntlColumnOption extends Task, TimestampParser.TimestampColumnOption {}
+
     private HashMap<String, TimestampParser> buildTimestampParserMap(ScriptingContainer jruby, List<ColumnConfig> columns, String joinedColumnPrefix, String timeZone)
     {
         final HashMap<String, TimestampParser> timestampParserMap = Maps.newHashMap();
@@ -143,7 +147,14 @@ public class JoinFileFilterPlugin
             if (Types.TIMESTAMP.equals(columnConfig.getType())) {
                 String format = columnConfig.getOption().get(String.class, "format");
                 DateTimeZone timezone = DateTimeZone.forID(timeZone);
-                TimestampParser parser = new TimestampParser(jruby, format, timezone);
+                // TODO: Switch to a newer TimestampParser constructor after a reasonable interval.
+                // Traditional constructor is used here for compatibility.
+                final ConfigSource configSource = Exec.newConfigSource();
+                configSource.set("format", format);
+                configSource.set("timezone", timezone);
+                TimestampParser parser = new TimestampParser(
+                    Exec.newConfigSource().loadConfig(ParserIntlTask.class),
+                    configSource.loadConfig(ParserIntlColumnOption.class));
 
                 String columnName = joinedColumnPrefix + columnConfig.getName();
 
