@@ -8,21 +8,18 @@ This plugin combine rows from file having data format like a table, based on a c
 
 ## Configuration
 
-- **base_column**: a column name of data embulk loaded (hash, required)
-  - **name**: name of the column
-  - **type**: type of the column (see below)
-  - **format**: format of the timestamp if type is timestamp
-- **counter_column**: a column name of data loaded from file (string, default: `{name: id, type: long}`)
-  - **name**: name of the column
-  - **type**: type of the column (see below)
-  - **format**: format of the timestamp if type is timestamp
-- **joined_column_prefix**: prefix added to joined data columns (string, default: `"_joined_by_embulk_"`)
-- **file_path**: path of file (string, required)
-- **file_format**: file format (string, required, supported: `csv`, `tsv`, `yaml`, `json`)
-- **columns**: required columns of data from the file (array of hash, required)
-  - **name**: name of the column
-  - **type**: type of the column (see below)
-  - **format**: format of the timestamp if type is timestamp
+* **on**:
+  * **in_column**: name of the column on input. (string, required)
+  * **file_column**: name of the column on file. (string, default is the same as **in_column**)
+* **file**:
+  * **path**: path of file (string, required)
+  * **format**: file format (string, required, supported: `json`)
+  * **encode**: file encode (string, default is `raw`, supported: `raw`, `gzip`)
+  * **columns**: required columns of data from the file (array of hash, required)
+    * **name**: name of the column
+    * **type**: type of the column (see below)
+    * **format**: format of the timestamp if type is timestamp
+    * **timezone**: timezone of the timestamp if type is timestamp  
 
 ---
 **type of the column**
@@ -34,20 +31,24 @@ This plugin combine rows from file having data format like a table, based on a c
 |timestamp|Date and time with nano-seconds precision|
 |double|64-bit floating point numbers|
 |string|Strings|
+|json|JSON|
 
 ## Example
 
 ```yaml
 filters:
   - type: join_file
-    base_column: {name: name_id, type: long}
-    counter_column: {name: id, type: long}
+    on:
+      in_column: name_id
+      file_column: id
+    file:
+      path: ./master.json
+      format: json
+      encode: raw
+      columns:
+        - {name: id, type: long}
+        - {name: name, type: string}
     joined_column_prefix: _joined_by_embulk_
-    file_path: master.json
-    file_format: json
-    columns:
-      - {name: id, type: long}
-      - {name: name, type: string}
 ```
 
 ## Run Example
@@ -58,43 +59,9 @@ $ embulk run -I lib example/config.yml
 ```
 
 ## Supported Data Format
-- csv ( **not implemented** )
-- tsv ( **not implemented** )
-- yaml ( **not implemented** )
-- json
+* json
 
 ### Supported Data Format Example
-
-#### CSV
-
-```csv
-id,name
-0,civitaspo
-2,mori.ogai
-5,natsume.soseki
-```
-
-#### TSV
-
-Since the representation is difficult, it represents the tab as `\t`.
-
-```tsv
-id\tname
-0\tcivitaspo
-2\tmori.ogai
-5\tnatsume.soseki
-```
-
-#### YAML
-
-```
-- id: 0
-  name: civitaspo
-- id: 2
-  name: mori.ogai
-- id: 5
-  name: natsume.soseki
-```
 
 #### JSON
 
